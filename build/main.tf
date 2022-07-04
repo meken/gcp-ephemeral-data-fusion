@@ -23,20 +23,14 @@ provider "cdap" {
     token = data.google_client_config.current.access_token
 }
 
-locals {
-    suffix = "sample-ku65"
-    region = "europe-west4"
-    zone = "europe-west4-a"
-}
-
 
 data "google_compute_network" "vpc_sample" {
-    name = "vpc-${local.suffix}"
+    name = var.network_name
 }
 
 data "google_compute_subnetwork" "subnet" {
     name = "sub-default"
-    region = local.region
+    region = var.region
 }
 
 data "google_service_account" "service_account" {
@@ -44,15 +38,15 @@ data "google_service_account" "service_account" {
 }
 
 resource "google_data_fusion_instance" "datafusion" {
-    name = "cdf-${local.suffix}"
-    region = local.region
+    name = var.cdf_name
+    region = var.region
     type = "DEVELOPER"
     enable_stackdriver_logging = true
     enable_stackdriver_monitoring = true
     private_instance = false
     network_config {
         network = data.google_compute_network.vpc_sample.name
-        ip_allocation = "10.128.0.0/22"
+        ip_allocation = var.ip_range
     }
     dataproc_service_account = data.google_service_account.service_account.email
 }
@@ -62,4 +56,8 @@ module "pipelines" {
     depends_on = [
       google_data_fusion_instance.datafusion
     ]
+}
+
+output "datafusion_instance_id" {
+    value = google_data_fusion_instance.datafusion.name
 }
