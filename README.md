@@ -1,6 +1,8 @@
 # Running an ephemeral Data Fusion instance
 [Cloud Data Fusion](https://cloud.google.com/data-fusion) is a fully managed, code-free data integration service that helps users efficiently build and manage ETL/ELT data pipelines. However, for organizations that have multiple environments (DEV/TEST/ACC/PROD) and different isolated teams it can become costly to host multiple Data Fusion instances 24/7. This repository illustrates an approach where ephemeral Data Fusion instances are created only when the data pipelines need to run and destroyed after the pipelines finish.
 
+Build status: [![Pipelines](https://github.com/meken/gcp-ephemeral-data-fusion/actions/workflows/build.yaml/badge.svg?branch=main&event=workflow_dispatch)](https://github.com/meken/gcp-ephemeral-data-fusion/actions/workflows/build.yaml) 
+
 ## Prerequisites
 We'll assume that the required services Cloud Data Fusion and Secret Manager are turned on. In addition, the networking needs to be set up properly (at least having a subnet in the region which allows internal communication).
 
