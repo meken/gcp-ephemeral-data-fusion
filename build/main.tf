@@ -15,7 +15,6 @@ provider "google" {
     project = var.project
 }
 
-
 data "google_client_config" "current" { }
 
 provider "cdap" {
@@ -23,13 +22,12 @@ provider "cdap" {
     token = data.google_client_config.current.access_token
 }
 
-
 data "google_compute_network" "vpc_sample" {
     name = var.network_name
 }
 
 data "google_compute_subnetwork" "subnet" {
-    name = "sub-default"
+    name = var.subnet_name
     region = var.region
 }
 
@@ -60,4 +58,8 @@ module "pipelines" {
 
 output "datafusion_instance_id" {
     value = google_data_fusion_instance.datafusion.name
+}
+
+output "datafusion_endpoint" {
+    value = "${google_data_fusion_instance.datafusion.service_endpoint}/api"
 }

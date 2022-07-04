@@ -1,0 +1,68 @@
+name: Pipelines
+
+on: [workflow_dispatch]
+
+env:
+  NETWORK_NAME: 'vpc-sample-n4ql'
+  SUBNET_NAME: 'sub-default'
+  CDF_NAME: 'cdf-sample-n4ql'
+  IP_RANGE: '10.128.0.0/22'
+  REGION: 'europe-west4'
+
+jobs: 
+  setup:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: build
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    - name: GCP Login
+      uses: google-github-actions/auth@v0
+      with:
+        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v0
+    - name: Set up Terraform
+      uses: hashicorp/setup-terraform@v1
+    - name: Generate pipeline resources
+      run: ./add-pipelines.sh 
+    - name: Terraform init
+      run: terraform init
+    - name: Terraform apply
+      run: |
+        terraform apply -auto-approve \
+          -var='project=${{ secrets.GOOGLE_PROJECT }}' \
+          -var='network_name=${{ env.NETWORK_NAME }}' \
+          -var='subnet_name=${{ env.SUBNET_NAME }}' \
+          -var='cdf_name=${{ env.CDF_NAME }}' \
+          -var='ip_range=${{ env.IP_RANGE }}' \
+          -var='region=${{ env.REGION }}'
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+    - name: Capture resource ids
+      id: resources
+      run: |
+        CDAP_ENDPOINT=`terraform output -raw datafusion_endpoint`
+        echo "::set-output name=cdap_endpoint::$CDAP_ENDPOINT"
+    - name: Set up secure store and start pipelines
+      run: ./start-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}
+    - name: Monitor pipelines
+      run: ./monitor-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}
+    - name: Check if all pipelines successfully completed
+      run: echo "Checking if all pipelines are completed, failing otherwise..."
+    - name: Terraform destroy
+      if: ${{ always() }}
+      run: |
+        terraform destroy -auto-approve \
+          -var='project=${{ secrets.GOOGLE_PROJECT }}' \
+          -var='network_name=${{ env.NETWORK_NAME }}' \
+          -var='subnet_name=${{ env.SUBNET_NAME }}' \
+          -var='cdf_name=${{ env.CDF_NAME }}' \
+          -var='ip_range=${{ env.IP_RANGE }}' \
+          -var='region=${{ env.REGION }}'        
+      env:
+        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+
