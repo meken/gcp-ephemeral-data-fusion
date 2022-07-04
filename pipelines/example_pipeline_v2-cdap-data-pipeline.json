@@ -1,0 +1,114 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.6.0",
+        "scope": "SYSTEM"
+    },
+    "description": "Data Pipeline Application",
+    "name": "example_pipeline_v2",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "Source",
+                "to": "Destination"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "Source",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsource",
+                    "label": "Source",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "useConnection": "false",
+                        "referenceName": "src-bq-austin",
+                        "dataset": "sample",
+                        "table": "austin_311",
+                        "enableQueryingViews": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"unique_key\",\"type\":[\"string\",\"null\"]},{\"name\":\"complaint_description\",\"type\":[\"string\",\"null\"]},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"string\",\"null\"]},{\"name\":\"status_change_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"created_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"last_update_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"close_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"incident_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"incident_zip\",\"type\":[\"long\",\"null\"]},{\"name\":\"county\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_x_coordinate\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_y_coordinate\",\"type\":[\"double\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"location\",\"type\":[\"string\",\"null\"]},{\"name\":\"council_district_code\",\"type\":[\"long\",\"null\"]},{\"name\":\"map_page\",\"type\":[\"string\",\"null\"]},{\"name\":\"map_tile\",\"type\":[\"string\",\"null\"]}]}",
+                        "project": "${secure(bq-austin-project-id)}",
+                        "serviceAccountType": "JSON",
+                        "serviceAccountJSON": "${secure(bq-austin-sa-json)}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"unique_key\",\"type\":[\"string\",\"null\"]},{\"name\":\"complaint_description\",\"type\":[\"string\",\"null\"]},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"string\",\"null\"]},{\"name\":\"status_change_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"created_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"last_update_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"close_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"incident_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"incident_zip\",\"type\":[\"long\",\"null\"]},{\"name\":\"county\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_x_coordinate\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_y_coordinate\",\"type\":[\"double\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"location\",\"type\":[\"string\",\"null\"]},{\"name\":\"council_district_code\",\"type\":[\"long\",\"null\"]},{\"name\":\"map_page\",\"type\":[\"string\",\"null\"]},{\"name\":\"map_tile\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "Source"
+            },
+            {
+                "name": "Destination",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "Destination",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.19.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "referenceName": "dst-bq-demo",
+                        "project": "${secure(bq-austin-project-id)}",
+                        "dataset": "sample",
+                        "table": "austin_311_updated",
+                        "serviceAccountType": "JSON",
+                        "operation": "insert",
+                        "truncateTable": "true",
+                        "allowSchemaRelaxation": "false",
+                        "location": "US",
+                        "createPartitionedTable": "false",
+                        "partitioningType": "TIME",
+                        "partitionFilterRequired": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"unique_key\",\"type\":[\"string\",\"null\"]},{\"name\":\"complaint_description\",\"type\":[\"string\",\"null\"]},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"string\",\"null\"]},{\"name\":\"status_change_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"created_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"last_update_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"close_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"incident_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"incident_zip\",\"type\":[\"long\",\"null\"]},{\"name\":\"county\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_x_coordinate\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_y_coordinate\",\"type\":[\"double\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"location\",\"type\":[\"string\",\"null\"]},{\"name\":\"council_district_code\",\"type\":[\"long\",\"null\"]},{\"name\":\"map_page\",\"type\":[\"string\",\"null\"]},{\"name\":\"map_tile\",\"type\":[\"string\",\"null\"]}]}",
+                        "serviceAccountJSON": "${secure(bq-austin-sa-json)}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"unique_key\",\"type\":[\"string\",\"null\"]},{\"name\":\"complaint_description\",\"type\":[\"string\",\"null\"]},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"string\",\"null\"]},{\"name\":\"status_change_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"created_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"last_update_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"close_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"incident_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"incident_zip\",\"type\":[\"long\",\"null\"]},{\"name\":\"county\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_x_coordinate\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_y_coordinate\",\"type\":[\"double\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"location\",\"type\":[\"string\",\"null\"]},{\"name\":\"council_district_code\",\"type\":[\"long\",\"null\"]},{\"name\":\"map_page\",\"type\":[\"string\",\"null\"]},{\"name\":\"map_tile\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Source",
+                        "schema": "{\"type\":\"record\",\"name\":\"output\",\"fields\":[{\"name\":\"unique_key\",\"type\":[\"string\",\"null\"]},{\"name\":\"complaint_description\",\"type\":[\"string\",\"null\"]},{\"name\":\"source\",\"type\":[\"string\",\"null\"]},{\"name\":\"status\",\"type\":[\"string\",\"null\"]},{\"name\":\"status_change_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"created_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"last_update_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"close_date\",\"type\":[{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"},\"null\"]},{\"name\":\"incident_address\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_number\",\"type\":[\"string\",\"null\"]},{\"name\":\"street_name\",\"type\":[\"string\",\"null\"]},{\"name\":\"city\",\"type\":[\"string\",\"null\"]},{\"name\":\"incident_zip\",\"type\":[\"long\",\"null\"]},{\"name\":\"county\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_x_coordinate\",\"type\":[\"string\",\"null\"]},{\"name\":\"state_plane_y_coordinate\",\"type\":[\"double\",\"null\"]},{\"name\":\"latitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"longitude\",\"type\":[\"double\",\"null\"]},{\"name\":\"location\",\"type\":[\"string\",\"null\"]},{\"name\":\"council_district_code\",\"type\":[\"long\",\"null\"]},{\"name\":\"map_page\",\"type\":[\"string\",\"null\"]},{\"name\":\"map_tile\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "id": "Destination"
+            }
+        ],
+        "schedule": "0 1 */1 * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "rangeRecordsPreview": {
+            "min": 1,
+            "max": "5000"
+        },
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
