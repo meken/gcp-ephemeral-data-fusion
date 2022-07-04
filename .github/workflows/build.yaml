@@ -44,7 +44,13 @@ jobs:
     - name: Capture resource ids
       id: resources
       run: |
-        CDAP_ENDPOINT=`terraform output -raw datafusion_endpoint`
+        CDAP_ENDPOINT=`gcloud beta data-fusion instances describe \
+          --location=${{ env.REGION }} \
+          --format="value(apiEndpoint)" \
+          ${{ env.CDF_NAME }}`
+        CDAP_ENDPOINT_DEBUG=`terraform output -raw datafusion_endpoint`
+        echo "CDAP_ENDPOINT: $CDAP_ENDPOINT"
+        echo "CDAP_ENDPOINT_DEBUG: $CDAP_ENDPOINT_DEBUG"
         echo "::set-output name=cdap_endpoint::$CDAP_ENDPOINT"
     - name: Set up secure store and start pipelines
       run: ./start-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}

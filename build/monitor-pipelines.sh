@@ -10,13 +10,13 @@ PIPELINES=`curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
 # check all run statuses for all pipelines, and sleep while at least one of them is running
 # TODO might need to renew the auth token when it expires
 while true; do  # 4
+    sleep 1m
     for PIPELINE in $PIPELINES; do # 3
         RUNS=`curl -s -H "Authorization: Bearer ${AUTH_TOKEN}" \
             "${CDAP_ENDPOINT}/v3/namespaces/default/apps/${PIPELINE}/workflows/DataPipelineWorkflow/runs" | jq -r '.[] | .status'`
         for STATUS in $RUNS; do # 2
             while grep -q "$STATUS" <<< "PENDING STARTING RUNNING STOPPING"; do # 1
                 echo "Waiting as $PIPELINE is $STATUS"
-                sleep 1m
                 continue 4
             done
         done
