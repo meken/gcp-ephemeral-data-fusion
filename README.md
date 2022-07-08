@@ -58,13 +58,14 @@ Since we expect each environment (dev/test/prod etc.) to be isolated, the build 
 ...
 steps:
     - name: Set branch specific variables
+      id: envionment
       run: |
-          echo "::set-env name=BRANCH_SPECIFIC_SECRET_NAME::GOOGLE_CREDENTIALS_${GITHUB_REF#refs/heads/}"
+          echo "::set-output name=BRANCH_SPECIFIC_SECRET_NAME::GOOGLE_CREDENTIALS_${GITHUB_REF#refs/heads/}"
     - name: Terraform apply
       run: |
         terraform apply -auto-approve -var-file="${GITHUB_REF#refs/heads/}.tfvars"
       env:
-        GOOGLE_CREDENTIALS: ${{ secrets[env.BRANCH_SPECIFIC_SECRET_NAME] }}
+        GOOGLE_CREDENTIALS: ${{ secrets[steps.environment.outputs.BRANCH_SPECIFIC_SECRET_NAME] }}
 ...
 ```
 
