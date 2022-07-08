@@ -1,6 +1,7 @@
 name: Pipelines
 
 on:
+  workflow_dispatch:
   push:
     branches:    
       - development
