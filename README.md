@@ -1,5 +1,5 @@
 # Running an ephemeral Data Fusion instance
-[Cloud Data Fusion](https://cloud.google.com/data-fusion) is a fully managed, code-free data integration service that helps users efficiently build and manage ETL/ELT data pipelines. However, for organizations that have multiple environments (DEV/TEST/ACC/PROD) and different isolated teams it can become costly to host multiple Data Fusion instances 24/7. This repository illustrates an approach where ephemeral Data Fusion instances are created only when the data pipelines need to run and destroyed after the pipelines finish. Note that this approach assumes that the environments will have different networking requirements to justify having different Data Fusion instances (hence not utilizing the namespaces for multi-tenancy for environments).
+[Cloud Data Fusion](https://cloud.google.com/data-fusion) is a fully managed, code-free data integration service that helps users efficiently build and manage ETL/ELT data pipelines. However, for organizations that have multiple environments (DEV/TEST/ACC/PROD) and different isolated teams it can become costly to host multiple Data Fusion instances 24/7. This repository illustrates an approach where ephemeral Data Fusion instances are created only when the data pipelines need to run and destroyed after the pipelines finish. Note that this approach assumes that the environments will have different networking requirements to justify having different Data Fusion instances (hence not utilizing different [namespaces](https://cdap.atlassian.net/wiki/spaces/DOCS/pages/480313725/Namespaces) for different environments).
 
 Build status: [![Pipelines](https://github.com/meken/gcp-ephemeral-data-fusion/actions/workflows/build.yaml/badge.svg?branch=main&event=workflow_dispatch)](https://github.com/meken/gcp-ephemeral-data-fusion/actions/workflows/build.yaml) 
 
@@ -18,9 +18,18 @@ There's also a few service accounts that need to be configured.
 - And probably additional service accounts to access resources such as BQ, GCS (alternative is to give these roles to the Dataproc service account for Data Fusion)
 
 ## Solution
-Data pipeline developers can use an ephemeral (and possibly cheap _DEVELOPER_ edition) Data Fusion instance for development. When they are finished with development, they'd need to export the pipeline(s) and commit to a Git (development) branch. Once the changes are pushed, a CI/CD pipeline will create a new ephemeral Data Fusion instance in the project for the environment (dev/test) and will import the pipelines, and trigger them. If the build is successful (depends on pipeline success) the branch can be promoted to the following environment (staging), if that's also successful, the branch can be merged to trunk (this could be through a pull request). The instance running in the production environment should either be _BASIC_ or _ENTERPRISE_ edition to be more reliable and handle possibly multiple pipelines running at the same time (and possibly using larger and/or autoscaling Dataproc clusters).
+Data pipeline developers can use an ephemeral (and possibly cheap _DEVELOPER_ edition) Data Fusion instance for development. When they are finished with development, they'd need to export the pipeline(s) and commit to a Git (development) branch in a specific folder. Once the changes are pushed, a CI/CD pipeline will create a new ephemeral Data Fusion instance in the project for the environment (dev/test) and will import the pipelines, and trigger them. If the build is successful (depends on pipeline success) the branch can be promoted to the following environment (staging), if that's also successful, the branch can be merged to trunk (this could be through a pull request). The instance running in the production environment should either be _BASIC_ or _ENTERPRISE_ edition to be more reliable and handle possibly multiple pipelines running at the same time (and possibly using larger and/or autoscaling Dataproc clusters).
 
 > Note that the build will be running until all the pipelines are finished. This might require increasing the timeouts for the build agent. If this is not feasible or desirable, the build might trigger a new [Cloud Function](https://cloud.google.com/functions) that could periodically poll the status of all pipelines and destroy the Data Fusion instance (and stop itself) when the pipelines are completed. Keep in mind that the example build configuration provided in this repository uses a simplistic approach for the Terraform backend storage (a local one), changing the approach would require using a different (shared and persistent) backend.
+
+### Steps
+The included Github Action workflow orchestrates the following steps: 
+- Discover and add data pipelines from the `pipelines` directory to the Terraform configuration
+- Create a new Data Fusion instance for the environment
+- Copy all secrets from the Secret Manager to the secure store of the new Data Fusion instance
+- Start all data pipelines
+- Wait until all data pipelines are completed and fail the build if any pipeline is not succesfull
+- Delete the Data Fusion instance (even if any of the previous steps fail)
 
 ### Scheduling
 The CI/CD pipeline configuration for the trunk should be a scheduled build (not a push triggered one) as that will be determining the frequency and timing of when the data pipelines should be running in production.
@@ -71,10 +80,7 @@ on:
       # etc...
 
   schedule:  # assuming that scheduling is done by the build system
-    cron:
-      - 0 6 * * *  # run every day at 6am
-    branches:
-      - main  # assuming main is production
+    - cron: 0 6 * * *  # run every day at 6am
 ```
 
 ## Summary

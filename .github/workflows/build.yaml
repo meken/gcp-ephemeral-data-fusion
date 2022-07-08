@@ -1,13 +1,13 @@
 name: Pipelines
 
-on: [workflow_dispatch]
+on:
+  push:
+    branches:    
+      - development
+#      - staging  # add as many environments as needed
 
-env:
-  NETWORK_NAME: 'vpc-sample-n4ql'
-  SUBNET_NAME: 'sub-default'
-  CDF_NAME: 'cdf-sample-n4ql'
-  IP_RANGE: '10.128.0.0/22'
-  REGION: 'europe-west4'
+#  schedule:  # assuming that scheduling is done by the build system
+#    - cron: "0 6 * * *"  # run _main_ every day at 6am
 
 jobs: 
   setup:
@@ -18,16 +18,20 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v3
+    - name: Set branch specific variables
+      run: |
+        echo "::set-env name=BRANCH_SPECIFIC_SECRET_NAME::GOOGLE_CREDENTIALS_${GITHUB_REF#refs/heads/}"
+        echo "::set-env name=BRANCH_SPECIFIC_PROJECT_NAME::GOOGLE_PROJECT_${GITHUB_REF#refs/heads/}"
     - name: GCP Login
       uses: google-github-actions/auth@v0
       with:
-        credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+        credentials_json: ${{ secrets[env.BRANCH_SPECIFIC_SECRET_NAME] }}
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v0
-      with:
-        install_components: beta
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
+      with:
+        terraform_wrapper: false
     - name: Generate pipeline resources
       run: ./add-pipelines.sh 
     - name: Terraform init
@@ -35,22 +39,14 @@ jobs:
     - name: Terraform apply
       run: |
         terraform apply -auto-approve \
-          -var='project=${{ secrets.GOOGLE_PROJECT }}' \
-          -var='network_name=${{ env.NETWORK_NAME }}' \
-          -var='subnet_name=${{ env.SUBNET_NAME }}' \
-          -var='cdf_name=${{ env.CDF_NAME }}' \
-          -var='ip_range=${{ env.IP_RANGE }}' \
-          -var='region=${{ env.REGION }}'
+          -var="project=${{ secrets[env.BRANCH_SPECIFIC_PROJECT_NAME] }}" \
+          -var-file="${GITHUB_REF#refs/heads/}.tfvars"
       env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        GOOGLE_CREDENTIALS: ${{ secrets[env.BRANCH_SPECIFIC_SECRET_NAME] }}
     - name: Capture resource ids
       id: resources
       run: |
-        CDAP_ENDPOINT=`gcloud beta data-fusion instances describe \
-          --location=${{ env.REGION }} \
-          --format="value(apiEndpoint)" \
-          ${{ env.CDF_NAME }}`
-        #echo "CDAP_ENDPOINT: $CDAP_ENDPOINT"
+        CDAP_ENDPOINT=`terraform output -raw datafusion_endpoint`
         echo "::set-output name=cdap_endpoint::$CDAP_ENDPOINT"
     - name: Set up secure store and start pipelines
       run: ./start-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}
@@ -62,13 +58,9 @@ jobs:
       if: ${{ always() }}
       run: |
         terraform destroy -auto-approve \
-          -var='project=${{ secrets.GOOGLE_PROJECT }}' \
-          -var='network_name=${{ env.NETWORK_NAME }}' \
-          -var='subnet_name=${{ env.SUBNET_NAME }}' \
-          -var='cdf_name=${{ env.CDF_NAME }}' \
-          -var='ip_range=${{ env.IP_RANGE }}' \
-          -var='region=${{ env.REGION }}'        
+          -var="project=${{ secrets[env.BRANCH_SPECIFIC_PROJECT_NAME] }}" \
+          -var-file="${GITHUB_REF#refs/heads/}.tfvars"
       env:
-        GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+        GOOGLE_CREDENTIALS: ${{ secrets[env.BRANCH_SPECIFIC_SECRET_NAME] }}
 
 

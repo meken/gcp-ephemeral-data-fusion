@@ -1,0 +1,5 @@
+network_name="vpc-sample-n4ql"
+subnet_name="sub-default"
+cdf_name="cdf-sample-n4ql"
+ip_range="10.128.0.0/22"
+region="europe-west4"
