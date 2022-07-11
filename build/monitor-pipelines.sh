@@ -38,5 +38,5 @@ for PIPELINE in $PIPELINE; do
     done
 done
 
-echo "All good"
+echo "All pipelines are complete"
 

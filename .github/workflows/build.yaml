@@ -50,7 +50,9 @@ jobs:
       run: |
         CDAP_ENDPOINT=`terraform output -raw datafusion_endpoint`
         echo "::set-output name=cdap_endpoint::$CDAP_ENDPOINT"
-    - name: Set up secure store and start pipelines
+    - name: Set up secure store
+      run: ./set-up-secure-store.sh ${{ steps.resources.outputs.cdap_endpoint }}
+    - name: Start pipelines
       run: ./start-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}
     - name: Monitor pipelines
       run: ./monitor-pipelines.sh ${{ steps.resources.outputs.cdap_endpoint }}
