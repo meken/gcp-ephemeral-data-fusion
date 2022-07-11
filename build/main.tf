@@ -26,13 +26,8 @@ data "google_compute_network" "vpc_sample" {
     name = var.network_name
 }
 
-data "google_compute_subnetwork" "subnet" {
-    name = var.subnet_name
-    region = var.region
-}
-
 data "google_service_account" "service_account" {
-    account_id = "sac-dataproc"
+    account_id = var.dataproc_service_account
 }
 
 resource "google_data_fusion_instance" "datafusion" {

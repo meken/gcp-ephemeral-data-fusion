@@ -8,14 +8,14 @@ variable "network_name" {
     description = "The name of the VPC network to use"
 }
 
-variable "subnet_name" {
-    type = string
-    description = "The name of the VPC subnet"
-}
-
 variable "cdf_name" {
     type = string
     description = "The name of the Data Fusion instance to be created"
+}
+
+variable "dataproc_service_account" {
+    type = string
+    description = "The name of the Dataproc Service Account, without the @...iam.gserviceaccount.com"
 }
 
 variable "ip_range" {

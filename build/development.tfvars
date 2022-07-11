@@ -1,5 +1,5 @@
 network_name="vpc-sample-ku65"
-subnet_name="sub-default"
 cdf_name="cdf-sample-ku65"
+dataproc_service_account = "sac-dataproc"
 ip_range="10.128.0.0/22"
 region="europe-west4"
